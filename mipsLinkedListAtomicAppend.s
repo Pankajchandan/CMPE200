@@ -45,7 +45,7 @@ main:
 	
 	##append node1 to list
 	move	$a0, $v0
-	jal	append_tail
+	jal	atomic_append_head
 	
 	##print msg1
 	la	$a0, msg1
@@ -61,7 +61,7 @@ main:
 	
 	##append node2 to list
 	move	$a0, $v0
-	jal	append_tail
+	jal	atomic_append_head
 	
 	##print msg2
 	la	$a0, msg2
@@ -82,7 +82,7 @@ main:
 
 #allocate node space in the heap
 node:
-	li	$v0, 9
+	li	$v0, 9 				#load syscall value to allocat memory in heap
 	li	$a0, 8 				# allocates 8 bytes, 4 for data and 4 for next
 	syscall
 	sw	$0, 0($v0) 			#load value zero to the int place
@@ -93,15 +93,15 @@ node:
 print_list:
 	move	$t0, $s0 			#copy head address to temp reg 0
 	loop: 
-		beq	$t0, $0, done
-		lw	$a0, 0($t0)
+		beq	$t0, $0, done		#branch if equal
+		lw	$a0, 0($t0)		
 		li	$v0, 1
 		syscall
 		la	$a0, link
 		li	$v0, 4
 		syscall
 		lw	$t0, 4($t0)
-		j	loop
+		j	loop			#keep iterating
 	done:
 		la	$a0, linkend
 		li	$v0, 4
@@ -109,25 +109,31 @@ print_list:
 		jr	$ra
 
 ##append from head:
-append_head:
-	lw	$t0, 0($s0)
-	beq	$t0, $0, emptylist 		#branch if list is empty
-	sw	$s0, 4($a0) 			#new node->next=head
+atomic_append_head:
+	ll	$t0, 0($s0) 			#load and link data value of head node
+	beq	$t0, $0, atomic_emptylist 	#branch if list is empty
+	move	$t1, $s0 			#copy address of head node to t1
+	sc	$t1, 4($a0) 			#new node->next=head
+	beqz	$t1, atomic_append_head 	#keep iterating if not successful
 	move	$s0, $a0 			#head =new node
 	jr	$ra
 
 
 ##append from tail:
-append_tail:
-	lw	$t0, 0($s1)
-	beq	$t0, $0, emptylist 		#branch if list is empty
-	sw	$a0, 4($s1) 			#tail->next=new node
+atomic_append_tail:
+	ll	$t0, 0($s1) 			#load and link data value of tail node
+	beq	$t0, $0, atomic_emptylist 	#branch if list is empty
+	move	$t1, $a0 			#copy address of new node to t1
+	sc	$t1, 4($s1) 			#tail->next=new node, store conditional
+	beqz	$t1, atomic_append_head 	#keep iterating if not successful
 	move	$s1, $a0 			#tail=new node
 	jr	$ra
 
 ##if list is empty	
-emptylist:
+atomic_emptylist:
 	lw	$t1, 0($a0) 			#load data value of new node
-	sw	$t1, 0($s0) 			#save new node data value into head node data field
+	sc	$t1, 0($s0) 			#save new node data value into head node data field
+	beqz	$t1, atomic_emptylist 		#keep iterating if not successful
 	move	$s1, $s0 			#head=tail
-	jr	$ra		
+	jr	$ra	
+		
