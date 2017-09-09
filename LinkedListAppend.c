@@ -6,36 +6,32 @@ struct node_t {
 };
             
 struct list_t { 
-	struct node_t* head;
+    struct node_t* head;
 	struct node_t* tail;
 };
 
 void list_head_append(struct list_t* list, struct node_t*  node) {
-	if(list->head==NULL){
-		list->head=list->tail=node;
-		list->head->next=NULL;
-	}
-	else{
-		struct node_t* buf;
-		buf=list->head;
-		list->head=node;
-		node->next=buf;
-	}
-                     
+    if(list->head->data==NULL){
+        list->head=node;
+        list->head->next=NULL;
+        list->tail=list->head;
+    }
+    else{
+        node->next=list->head;
+	    list->head=node;   
+    }
 }
 
 void list_tail_append(struct list_t* list, struct node_t*  node) {
-	if(list->tail==NULL){
-		list->head=list->tail=node;
-		list->tail->next=NULL;
-	}
-	else{
-		struct node_t* buf;
-		buf=list->tail;
-		list->tail=node;
-		node->next=buf;
-	}                    
-
+    if(list->tail->data==NULL){
+        list->tail=node;
+        list->tail->next=NULL;
+        list->head=list->tail;
+    }
+    else{
+	    list->tail->next=node;
+	    list->tail=node;
+    }
 }
 
 void print_list(struct list_t* list){
@@ -48,20 +44,27 @@ void print_list(struct list_t* list){
 	printf("null");
 }
 
-void init_node(struct node_t* node,int data){
-	node->data=data;
-}
-
 int main(void){
+    //init list
 	struct list_t list1;
+	list1.head=(struct node_t*)malloc(sizeof(struct node_t));
+	list1.tail=(struct node_t*)malloc(sizeof(struct node_t));
+	list1.head->data = list1.tail->data = NULL;
+
+    //init nodes
 	struct node_t node1,node2;
 	printf("initializing node1 \n");
-	init_node(&node1,10);
+	node1.data = 10;
 	printf("initializing node2 \n");
-	init_node(&node2,20);
-	list_head_append(&list1,&node1);
+	node2.data = 20;
+	
+	//append nodes
+	list_tail_append(&list1,&node1);
 	list_head_append(&list1,&node2);
+	
+	//print nodes
 	printf("printing list \n");
 	print_list(&list1);
+	
 	return 0;
 }
