@@ -1,15 +1,19 @@
 #include<stdio.h>
 #include<stdlib.h>
+
+//node struct
 struct node_t { 
 	int data; 
 	struct node_t* next; 
 };
-            
+
+//list struct
 struct list_t { 
     struct node_t* head;
 	struct node_t* tail;
 };
 
+//method to append from head
 void list_head_append(struct list_t* list, struct node_t*  node) {
     if(list->head->data==NULL){
         list->head=node;
@@ -22,6 +26,7 @@ void list_head_append(struct list_t* list, struct node_t*  node) {
     }
 }
 
+//method to append from tail
 void list_tail_append(struct list_t* list, struct node_t*  node) {
     if(list->tail->data==NULL){
         list->tail=node;
@@ -34,6 +39,7 @@ void list_tail_append(struct list_t* list, struct node_t*  node) {
     }
 }
 
+//print list
 void print_list(struct list_t* list){
 	struct node_t* buf; 
 	buf=list->head;
@@ -44,6 +50,7 @@ void print_list(struct list_t* list){
 	printf("null");
 }
 
+//print main
 int main(void){
     //init list
 	struct list_t list1;
